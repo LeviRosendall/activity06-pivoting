@@ -1,6 +1,6 @@
 ---
 title: "Activity 6"
-author: "Name"
+author: "Levi Rosendall"
 output: github_document
 ---
 
@@ -46,8 +46,12 @@ Art by [@allison_horst](https://twitter.com/allison_horst)
 Now, why is `by_speaker` untidy data?
 How would this data be organized if it were tidy?
 Do not use any of your new `{tidyr}` skills yet, only describe it.
+```{r}
+by_speaker
 
-**Response**: 
+```
+
+**Response**: This is untidy data because each row has 10 observations, whereas if it was tidy data, each speaker would need 10 rows.
 
 
 ![](README-img/noun_pause.png) **Planned Pause Point**: If you have any questions, contact your instructor. Otherwise feel free to continue on.
@@ -84,6 +88,16 @@ Remember that you can view the help documentation by using the `?` method in you
 3. Name your code chunk either `pivot_contains` or `pivot_ends` depending on which helper function you used.
 
 
+```{r pivot_starts}
+friends_tidy <- by_speaker %>% 
+  pivot_longer(
+    cols = starts_with("Season", ignore.case=TRUE, vars=NULL),
+    names_to = "Season",
+    values_to = "Words"
+  )
+
+friends_tidy
+```
 
 
 ### Save the dataset
@@ -96,6 +110,9 @@ We can do this by writing it to a file within our directory.
 3. Name your code chunk `writing_file`
 
 
+```{r writing_file}
+write_csv(friends_tidy, here::here("data", "friends_tidy.csv"))
+```
 
 
 Inspect that this file was created by looking in the `data` project folder in the **Files** pane.
@@ -113,6 +130,10 @@ This is the same information that we were just worked with, but structured in a 
 2. Assign this data file into meaningful objects.
 3. Name this code chunk `read_season_file`.
 
+```{r read_season_file}
+by_season <- read_csv(here::here("data","by_season.csv"))
+by_season
+```
 
 
 
@@ -122,6 +143,13 @@ Now,
 2. Assign it to an object called `speaker_tidy`, and
 3. Name the code chunk `pivot_speaker`.
 
+```{r}
+speaker_tidy <- by_season %>% 
+  pivot_longer(cols = Chandler:Ross,
+               names_to = "Speaker",
+               values_to = "Words")
+speaker_tidy
+```
 
 
 
@@ -130,16 +158,59 @@ Now,
 Using `by_season` and your skills from past activities, write the code that computes the total number of words spoken by each season and the total words spoken across the series (challenge, can you display this information in one table?).
 Name this code chunk `season_summary`.
 
+```{r season_summary}
+tot <- by_season %>% 
+  group_by(season) %>% 
+  summarize(total_words = sum(Chandler:Ross))
+
+tot1 <- tot %>% 
+  summarise(season = "All", total_words=sum(total_words))
+tot
+tot1
+rbind(tot, tot1)
+  
+
+```
 
 
 Using `by_speaker` and your skills from past activities, write the code that computes the total number of words spoken by each season and the total words spoken across the series (challenge, can you display this information in one table?).
 Name this code chunk `speaker_summary`.
 
+```{r speaker_summary}
+seasons <- by_speaker %>% 
+  summarise(S1=sum(`Season 1`), 
+            S2=sum(`Season 2`), 
+            S3=sum(`Season 3`), 
+            S4=sum(`Season 4`), 
+            S5=sum(`Season 5`), 
+            S6=sum(`Season 6`), 
+            S7=sum(`Season 7`), 
+            S8=sum(`Season 8`), 
+            S9=sum(`Season 9`), 
+            S10=sum(`Season 10`)) %>% 
+  pivot_longer(cols = S1:S10, names_to = "Season", values_to = "Words_Spoken")
+
+all <- seasons %>% 
+  summarise(Season="All", Words_Spoken=sum(Words_Spoken))
+
+rbind(seasons, all)
+
+```
 
 
 Using the `friends_tidy` object and your skills from past activities, write the code that computes the total number of words spoken by each season and the total words spoken across the series (challenge, can you display this information in one table?).
 Call this code chunk `tidy_summary`
 
+```{r}
+all <- friends_tidy %>% 
+  summarise(Season="All", Word = sum(Words))
+
+season <- friends_tidy %>%
+  group_by(Season) %>% 
+  summarise(Word = sum(Words))
+
+rbind(season, all)
+```
 
 
 How does the code for `friends_tidy` compare to the two `by_` code?
@@ -147,7 +218,7 @@ Reflect on the process of writing this code and on the code itself.
 Which is easier to write?
 Which is easier to read?
 
-**Response**:
+**Response**: The friends_tidy code was much easier to write and to imagine how to group by. It was also easier to read, because the dataset was simple to work with.
 
 
 
@@ -176,6 +247,10 @@ friends_tidy %>%
 Write the code to take the tidy dataset and create one variable for each *speaker*.
 Call this code chunk `speaker_wide`.
 
+```{r speaker_wide}
+untidy <- friends_tidy %>% 
+  pivot_wider(names_from = speaker, values_from = Words)
+```
 
 
 
@@ -189,6 +264,9 @@ A note before installing new packages: The HPC support team has [created a guide
 
 Use `knitr::kable` and `{kableExtra}` to dress up the `speaker_wide` table.
 
+```{r}
+knitr::kable(head(untidy[, 1:7]), "simple")
+```
 
 
 ### The Curb Cut Effect
@@ -209,6 +287,11 @@ Here is a short video (4:44) that showcases how screen readers interpret element
 ![Screen reader demo for digital accessibility by UC San Fran](https://www.youtube.com/watch?v=dEbl5jvLKGQ)
 
 **Update** your table in the previous section to add a *table caption*.
+
+```{r}
+knitr::kable(head(untidy[, 1:7]), "simple", 
+             caption = "Table of Friends Characters and how many words they spoke a season")
+```
 
 
 ## Challenge: One more `pivot_wider`
@@ -235,6 +318,13 @@ tidyr::us_rent_income
 
 2. Assign this to `us_wide`
 
+```{r}
+us_wide <- us_rent_income %>% 
+  pivot_wider(names_from=variable,
+              names_glue="{variable}_{.value}",
+              values_from=c(estimate, moe))
+us_wide
+```
 
 
 Now, 
@@ -250,6 +340,16 @@ Now,
   Hint: There are some additional arguments in `pivot_longer` that can assist with this. Look at the **Examples** in the help documentation.
 
 2. Assign this to `us_long`
+
+```{r}
+us_wide %>% 
+  pivot_longer(cols=income_estimate:rent_moe,
+               names_to = c("Variable", ".value"),
+               names_pattern="(.*)_(.*)"
+               )
+
+
+```
 
 
 ## Attribution
